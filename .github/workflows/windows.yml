@@ -11,12 +11,26 @@ on:
 jobs:
   build:
     runs-on: windows-2019
+
     defaults:
       run:
         shell: bash --login -eo pipefail "{0}"
+
+    strategy:
+      matrix:
+        mingw: ["MINGW32", "MINGW64"]
+        include:
+          - mingw: "MINGW32"
+            arch: "i686"
+          - mingw: "MINGW64"
+            arch: "x86_64"
+
     env:
-      MSYSTEM: MINGW64
+      MSYSTEM: ${{ matrix.mingw }}
       CHERE_INVOKING: 1
+
+    name: Build (${{ matrix.arch }})
+
     steps:
       - uses: actions/checkout@v2
       - name: Set up shell
@@ -30,22 +44,20 @@ jobs:
       - name: Cache pacman packages
         uses: actions/cache@v2.0.0
         with:
-          key: pacman-cache
+          key: pacman-cache-${{ matrix.arch }}
           path: C:\tools\msys64\var\cache\pacman\pkg
 
       - name: Install dependencies
         run: >
-          pacman -S --noconfirm --needed zip base-devel mingw-w64-x86_64-toolchain diffutils
-          pkg-config mingw-w64-x86_64-yasm mingw-w64-x86_64-gcc mingw-w64-x86_64-SDL
+          pacman -S --noconfirm --needed zip base-devel mingw-w64-${{ matrix.arch }}-toolchain diffutils
+          pkg-config mingw-w64-${{ matrix.arch }}-yasm mingw-w64-${{ matrix.arch }}-gcc mingw-w64-${{ matrix.arch }}-SDL
 
       - name: Cache libav
         id: cache-libav
         uses: actions/cache@v2.0.0
         with:
           path: ${{ env.LIBAV_PATH }}
-          key: libav-11.8
-          restore-keys: |
-            libav
+          key: libav-11.8-${{ matrix.arch }}
 
       - name: Configure libav
         if: steps.cache-libav.outputs.cache-hit != 'true'
@@ -85,7 +97,7 @@ jobs:
         continue-on-error: true
         uses: actions/upload-artifact@v2
         with:
-          name: unpaper-${{ env.REF_NAME }}-${{ env.SHORT_HASH }}-windows-x86_84
+          name: unpaper-${{ env.REF_NAME }}-${{ env.SHORT_HASH }}-windows-${{ matrix.arch }}
           path: exe/bin/*
 
       # TAG:
@@ -117,5 +129,5 @@ jobs:
         with:
           upload_url: ${{ steps.create-release.outputs.upload_url }}
           asset_path: unpaper.zip
-          asset_name: ${{ env.REF_NAME }}-windows-x86_64.zip
+          asset_name: ${{ env.REF_NAME }}-windows-${{ matrix.arch }}.zip
           asset_content_type: application/zip
