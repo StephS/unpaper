@@ -22,6 +22,7 @@ jobs:
         include:
           - mingw: "MINGW32"
             arch: "i686"
+            file:
           - mingw: "MINGW64"
             arch: "x86_64"
 
@@ -93,7 +94,7 @@ jobs:
 
       # COMMIT:
       - name: Upload a Build Artifact
-        if: ${{ contains(github.event.ref, 'heads') }}
+        if: startsWith(github.ref, 'refs/heads/')
         continue-on-error: true
         uses: actions/upload-artifact@v2
         with:
@@ -101,33 +102,21 @@ jobs:
           path: exe/bin/*
 
       # TAG:
-      - name: Create zip for release
-        if: ${{ contains(github.event.ref, 'tags') }}
+      - name: Zip files and create checksum
+        if: startsWith(github.ref, 'refs/tags/')
         continue-on-error: true
         run: |
-          ( cd exe/bin && zip -r ../../unpaper.zip . )
+          FILENAME=${{ env.REF_NAME }}-windows-${{ matrix.arch }}
+          echo "::set-env name=FILENAME::${FILENAME}"
+          ( cd exe/bin && zip -r ../../${FILENAME}.zip . )
+          sha256sum ${FILENAME}.zip > ${FILENAME}.sha256
 
-      - name: Create Release
-        if: ${{ contains(github.event.ref, 'tags') }}
-        id: create-release
-        continue-on-error: true
-        uses: actions/create-release@v1
+      - name: Create release
+        uses: softprops/action-gh-release@v1
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          files: |
+            ${{ env.FILENAME }}.zip
+            ${{ env.FILENAME }}.sha256
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: ${{ github.ref }}
-          release_name: ${{ github.ref }}
-          draft: false
-          prerelease: false
-
-      - name: Upload Release Asset
-        if: ${{ contains(github.event.ref, 'tags') }}
-        continue-on-error: true
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create-release.outputs.upload_url }}
-          asset_path: unpaper.zip
-          asset_name: ${{ env.REF_NAME }}-windows-${{ matrix.arch }}.zip
-          asset_content_type: application/zip
