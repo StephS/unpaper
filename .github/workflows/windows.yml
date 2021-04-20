@@ -5,7 +5,7 @@
 name: Windows Build
 on:
   push:
-    branches: [master]
+    branches: [main]
     tags: ["*"]
 
 jobs:
@@ -37,10 +37,10 @@ jobs:
       - name: Set up shell
         shell: pwsh
         run: |
-          echo ::add-path::C:\msys64\usr\bin\
-          echo "::set-env name=LIBAV_PATH::$($ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath("${{ github.workspace }}/../libav-11.8"))"
-          echo "::set-env name=REF_NAME::$("${{ github.event.ref }}".replace('refs/heads/', '').replace('refs/tags/', ''))"
-          echo "::set-env name=SHORT_HASH::$('${{ github.sha }}'.SubString(0, 7))"
+          echo "C:\msys64\usr\bin\"  | Out-File -FilePath $Env:GITHUB_PATH -Encoding utf8 -Append
+          echo "LIBAV_PATH=$($ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath("${{ github.workspace }}/../libav-11.8"))"  | Out-File -FilePath $Env:GITHUB_ENV -Encoding utf8 -Append
+          echo "REF_NAME=$("${{ github.event.ref }}".replace('refs/heads/', '').replace('refs/tags/', ''))"  | Out-File -FilePath $Env:GITHUB_ENV -Encoding utf8 -Append
+          echo "SHORT_HASH=$('${{ github.sha }}'.SubString(0, 7))"  | Out-File -FilePath $Env:GITHUB_ENV -Encoding utf8 -Append
 
       - name: Cache pacman packages
         uses: actions/cache@v2.0.0
@@ -107,7 +107,7 @@ jobs:
         continue-on-error: true
         run: |
           FILENAME=${{ env.REF_NAME }}-windows-${{ matrix.arch }}
-          echo "::set-env name=FILENAME::${FILENAME}"
+          echo "FILENAME=${FILENAME}" >> $GITHUB_ENV
           ( cd exe/bin && zip -r ../../${FILENAME}.zip . )
           sha256sum ${FILENAME}.zip > ${FILENAME}.sha256
 
