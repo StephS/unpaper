@@ -2,7 +2,7 @@
 #
 # SPDX-License-Identifier: MIT
 
-project('unpaper', 'c', default_options : ['c_std=c11'])
+project('unpaper', 'c', version : '7.0.0', default_options : ['c_std=c11'])
 
 if not meson.version().version_compare('>0.57')
     error('Meson 0.57 or later required')
@@ -25,6 +25,10 @@ unpaper_deps = [
     cc.find_library('m', required : false)
 ]
 
+conf_data = configuration_data()
+conf_data.set('version', meson.project_version())
+configure_file(input: 'version.h.in', output: 'version.h', configuration: conf_data)
+
 unpaper = executable(
     'unpaper',
     'file.c', 'imageprocess.c', 'parse.c', 'tools.c', 'unpaper.c',
@@ -32,7 +36,7 @@ unpaper = executable(
     install : true,
 )
 
-sphinx = find_program('sphinx-build', required: true)
+sphinx = find_program('sphinx-build', required: true, version: '>= 3.4')
 
 custom_target(
     'man',
@@ -43,21 +47,23 @@ custom_target(
     install_dir: join_paths(get_option('prefix'), get_option('mandir'), 'man1'),
 )
 
-pytest = find_program('pytest', required: false)
-if pytest.found()
-    test(
-        'pytest suite',
-        pytest,
-        args: [
-            meson.project_source_root() + '/tests/unpaper_tests.py'
-        ],
-        env: [
-            'TEST_IMGSRC_DIR=' + meson.project_source_root() + '/tests/source_images/',
-            'TEST_GOLDEN_DIR=' + meson.project_source_root() + '/tests/golden_images/',
-            'TEST_UNPAPER_BINARY=' + unpaper.full_path(),
-        ],
-        timeout : -1,
-    )
-else
-    warning('pytest not found, tests will not be performed.')
+pymod = import('python')
+python = pymod.find_installation(required: false, modules: ['pytest', 'PIL'], disabler: true)
+
+if not python.found()
+    warning('pytest or Pillow not found, tests will not be performed.')
 endif
+
+test(
+    'pytest suite',
+    python,
+    args: [
+        '-m', 'pytest', meson.project_source_root() + '/tests/unpaper_tests.py'
+    ],
+    env: [
+        'TEST_IMGSRC_DIR=' + meson.project_source_root() + '/tests/source_images/',
+        'TEST_GOLDEN_DIR=' + meson.project_source_root() + '/tests/golden_images/',
+        'TEST_UNPAPER_BINARY=' + unpaper.full_path(),
+    ],
+    timeout : -1,
+)

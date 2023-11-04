@@ -4,14 +4,14 @@
 
 repos:
 -   repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v3.4.0
+    rev: v4.4.0
     hooks:
     -   id: check-yaml
 -   repo: https://github.com/fsfe/reuse-tool
-    rev: v0.12.1
+    rev: v1.1.2
     hooks:
     - id: reuse
 -   repo: https://github.com/doublify/pre-commit-clang-format
-    rev: master
+    rev: 62302476d0da01515660132d76902359bed0f782
     hooks:
     -   id: clang-format

@@ -22,9 +22,10 @@
 #include "parse.h"
 #include "tools.h"
 #include "unpaper.h"
+#include "version.h"
 
 #define WELCOME                                                                \
-  "unpaper"                                                               \
+  "unpaper " VERSION_STR                                                              \
   "\n"                                                                         \
   "License GPLv2: GNU GPL version 2.\n"                                        \
   "This is free software: you are free to change and redistribute it.\n"       \
@@ -221,7 +222,7 @@ int main(int argc, char *argv[]) {
         {"end-sheet", required_argument, NULL, 0x7f},
         {"start-input", required_argument, NULL, 0x80},
         {"si", required_argument, NULL, 0x80},
-        {"start-ouput", required_argument, NULL, 0x81},
+        {"start-output", required_argument, NULL, 0x81},
         {"so", required_argument, NULL, 0x81},
         {"sheet-size", required_argument, NULL, 'S'},
         {"sheet-background", required_argument, NULL, 0x82},
@@ -368,7 +369,7 @@ int main(int argc, char *argv[]) {
       return c == '?' ? 1 : 0;
 
     case 'V':
-      puts("6.2+");
+      puts(VERSION_STR);
       return 0;
 
     case 'l':
@@ -1648,7 +1649,7 @@ int main(int argc, char *argv[]) {
         }
       }
 
-      // permamently apply masks
+      // permanently apply masks
       if (maskCount > 0) {
         saveDebug("_before-masking%d.pnm", nr, sheet);
         applyMasks(mask, maskCount, sheet);
