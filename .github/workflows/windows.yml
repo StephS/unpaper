@@ -38,7 +38,7 @@ jobs:
         shell: pwsh
         run: |
           echo "C:\msys64\usr\bin\"  | Out-File -FilePath $Env:GITHUB_PATH -Encoding utf8 -Append
-          echo "LIBAV_PATH=$($ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath("${{ github.workspace }}/../libav-11.8"))"  | Out-File -FilePath $Env:GITHUB_ENV -Encoding utf8 -Append
+          echo "LIBAV_PATH=$($ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath("${{ github.workspace }}/../libav-11.11"))"  | Out-File -FilePath $Env:GITHUB_ENV -Encoding utf8 -Append
           echo "REF_NAME=$("${{ github.event.ref }}".replace('refs/heads/', '').replace('refs/tags/', ''))"  | Out-File -FilePath $Env:GITHUB_ENV -Encoding utf8 -Append
           echo "SHORT_HASH=$('${{ github.sha }}'.SubString(0, 7))"  | Out-File -FilePath $Env:GITHUB_ENV -Encoding utf8 -Append
 
@@ -58,15 +58,15 @@ jobs:
         uses: actions/cache@v2.0.0
         with:
           path: ${{ env.LIBAV_PATH }}
-          key: libav-11.8-${{ matrix.arch }}
+          key: libav-11.11-${{ matrix.arch }}
 
       - name: Configure libav
         if: steps.cache-libav.outputs.cache-hit != 'true'
         working-directory: ${{ github.workspace }}/..
         run: |
-          wget https://libav.org/releases/libav-11.8.tar.xz
-          tar -xvf libav-11.8.tar.xz || true
-          mv libav-11.8 ${LIBAV_PATH}
+          wget https://github.com/libav/libav/archive/refs/tags/v11.11.tar.gz
+          tar -xvf libav-11.11.tar.xz || true
+          mv libav-11.11 ${LIBAV_PATH}
           cd ${LIBAV_PATH}
           ./configure --target-os=mingw32 --prefix=${MINGW_PREFIX}
 
